@@ -1,0 +1,31 @@
+---
+- name: Deploy web app to app servers (rolling)
+  hosts: app_servers
+  serial: 1       # VERY IMPORTANT: update one server at a time
+  become: yes
+
+  vars:
+    app_src_path: /home/ashutosh-ubuntu/devops-assignment/deploy-working-copy
+    app_dest_path: /var/www/myapp
+
+  tasks:
+    - name: Copy app files to server
+      synchronize:
+        src: "{{ app_src_path }}/"
+        dest: "{{ app_dest_path }}/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=.git"
+
+    - name: Ensure permissions
+      file:
+        path: "{{ app_dest_path }}"
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded
+

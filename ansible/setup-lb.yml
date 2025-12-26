@@ -1,0 +1,52 @@
+---
+- name: Setup Nginx load balancer
+  hosts: load_balancer
+  become: yes
+
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Create nginx upstream and proxy config
+      copy:
+        dest: /etc/nginx/sites-available/loadbalancer.conf
+        content: |
+          upstream app_backend {
+              server 43.204.228.239;
+              server 13.201.226.17;
+          }
+
+          server {
+              listen 80;
+              server_name _;
+
+              location / {
+                  proxy_pass http://app_backend;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+          }
+      notify: Reload nginx
+
+    - name: Enable load balancer site
+      file:
+        src: /etc/nginx/sites-available/loadbalancer.conf
+        dest: /etc/nginx/sites-enabled/loadbalancer.conf
+        state: link
+      notify: Reload nginx
+
+    - name: Remove default site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded
+

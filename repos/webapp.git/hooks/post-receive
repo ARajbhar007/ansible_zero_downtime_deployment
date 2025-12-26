@@ -1,0 +1,10 @@
+#!/bin/bash
+# 1. Update working copy
+GIT_WORK_TREE=/home/$USER/devops-assignment/deploy-working-copy \
+GIT_DIR=/home/$USER/devops-assignment/repos/webapp.git \
+git checkout -f
+
+# 2. Run Ansible deploy playbook
+cd /home/$USER/devops-assignment/ansible
+ansible-playbook deploy-app.yml
+
